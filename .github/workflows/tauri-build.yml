@@ -3,8 +3,7 @@ name: Build Tauri App
 on:
   push:
     tags:
-      - 'v*'          # 只有 push tag 时触发构建
-  workflow_dispatch:   # 手动触发也可以
+      - '*'  # 任何标签触发构建
 
 jobs:
   build:
@@ -12,6 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]  # 双平台
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -19,23 +19,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ 打印目录结构，调试路径是否正确
+      # 2️⃣ 打印目录结构，调试路径
       - name: Debug list files
+        shell: bash
         run: |
           echo "Current directory: $PWD"
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then
-            pwsh -Command "Get-ChildItem -Force"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            pwsh -Command "Get-ChildItem -Force | Format-Table -AutoSize"
           else
             ls -la
-          fi
-          echo "Check videoCapture directory:"
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then
-            pwsh -Command "Get-ChildItem -Force videoCapture"
-          else
             ls -la videoCapture
           fi
 
-      # 3️⃣ 安装 Node
+      # 3️⃣ 安装 Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,7 +41,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # 5️⃣ 安装依赖
+      # 5️⃣ 安装前端依赖
       - name: Install dependencies
         run: |
           cd videoCapture
@@ -57,18 +53,8 @@ jobs:
           cd videoCapture
           npm run build
 
-      # 7️⃣ 构建 Tauri App
-      - name: Build Tauri application
+      # 7️⃣ 构建 Tauri 桌面应用
+      - name: Build Tauri App
         run: |
           cd videoCapture
-          npm run tauri build
-
-      # 8️⃣ 打印构建产物
-      - name: List dist folder
-        run: |
-          cd videoCapture
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then
-            pwsh -Command "Get-ChildItem -Force src-tauri/target/release/bundle"
-          else
-            ls -la src-tauri/target/release/bundle
-          fi
+          npx tauri build
