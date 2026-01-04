@@ -3,14 +3,15 @@ name: Build Tauri App
 on:
   push:
     tags:
-      - '*'  # 任何标签触发构建
+      - '*'  # 任何 tag push 时触发构建
+  workflow_dispatch:  # 手动触发也可以用
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]  # 双平台
+        os: [macos-latest, windows-latest]  # 双平台构建
 
     runs-on: ${{ matrix.os }}
 
@@ -19,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ 打印目录结构，调试路径
+      # 2️⃣ 打印目录结构调试
       - name: Debug list files
         shell: bash
         run: |
@@ -58,3 +59,26 @@ jobs:
         run: |
           cd videoCapture
           npx tauri build
+
+      # 8️⃣ 上传构建产物到 GitHub Actions Artifact
+      - name: Upload Tauri build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: tauri-build-${{ matrix.os }}
+          path: videoCapture/src-tauri/target/release/bundle/
+
+      # 9️⃣ 发布到 GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}  # 使用触发的 tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Tauri release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: videoCapture/src-tauri/target/release/bundle/**/*  # 上传打包好的安装包
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
