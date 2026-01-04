@@ -1,0 +1,8 @@
+{
+  "name": "ScreenMaster Pro",
+  "description": "A high-performance screen recording and screenshot tool with annotation capabilities.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
