@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - '*'  # 任何 tag push 时触发构建
-  workflow_dispatch:  # 手动触发也可以用
+  workflow_dispatch:  # 手动触发也可用
 
 jobs:
   build:
@@ -60,25 +60,26 @@ jobs:
           cd videoCapture
           npx tauri build
 
-      # 8️⃣ 上传构建产物到 GitHub Actions Artifact
+      # 8️⃣ 上传构建产物到 GitHub Actions Artifact（v4）
       - name: Upload Tauri build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tauri-build-${{ matrix.os }}
           path: videoCapture/src-tauri/target/release/bundle/
 
-      # 9️⃣ 发布到 GitHub Release
+      # 9️⃣ 创建 GitHub Release（如果 push tag）
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}  # 使用触发的 tag
+          tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 🔟 上传 Release 安装包
       - name: Upload Tauri release assets
         uses: softprops/action-gh-release@v1
         with:
-          files: videoCapture/src-tauri/target/release/bundle/**/*  # 上传打包好的安装包
+          files: videoCapture/src-tauri/target/release/bundle/**/*  # 打包产物路径
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
