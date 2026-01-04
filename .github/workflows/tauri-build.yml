@@ -1,0 +1,46 @@
+name: Build Tauri App
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        working-directory: videoCapture
+        run: npm install
+
+      - name: Build frontend
+        working-directory: videoCapture
+        run: npm run build
+
+      - name: Build Tauri app
+        working-directory: videoCapture
+        run: npx tauri build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-${{ matrix.os }}
+          path: |
+            videoCapture/src-tauri/target/release/bundle/**
