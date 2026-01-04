@@ -3,7 +3,7 @@ name: Build Tauri App
 on:
   push:
     tags:
-      - "v*"  # 只有打 tag 才触发
+      - '*'  # 任何标签触发构建
 
 jobs:
   build:
@@ -19,14 +19,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ 打印目录结构，调试路径是否正确（可保留，也可删掉）
+      # 2️⃣ 打印目录结构，调试路径
       - name: Debug list files
+        shell: bash
         run: |
-          pwd
-          ls -la
-          ls -la videoCapture
+          echo "Current directory: $PWD"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            pwsh -Command "Get-ChildItem -Force | Format-Table -AutoSize"
+          else
+            ls -la
+            ls -la videoCapture
+          fi
 
-      # 3️⃣ 安装 Node
+      # 3️⃣ 安装 Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,7 +41,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # 5️⃣ 安装依赖
+      # 5️⃣ 安装前端依赖
       - name: Install dependencies
         run: |
           cd videoCapture
@@ -48,16 +53,8 @@ jobs:
           cd videoCapture
           npm run build
 
-      # 7️⃣ 构建 Tauri app
-      - name: Build Tauri app
+      # 7️⃣ 构建 Tauri 桌面应用
+      - name: Build Tauri App
         run: |
           cd videoCapture
           npx tauri build
-
-      # 8️⃣ 上传安装包到 GitHub Artifacts
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-${{ matrix.os }}
-          path: |
-            videoCapture/src-tauri/target/release/bundle/**
