@@ -3,41 +3,58 @@ name: Build Tauri App
 on:
   push:
     tags:
-      - "v*"
+      - "v*"  # 只有打 tag 才触发
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]  # 双平台
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repo
+      # 1️⃣ 获取仓库代码
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ 打印目录结构，调试路径是否正确（可保留，也可删掉）
+      - name: Debug list files
+        run: |
+          pwd
+          ls -la
+          ls -la videoCapture
+
+      # 3️⃣ 安装 Node
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
+      # 4️⃣ 安装 Rust
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # 5️⃣ 安装依赖
       - name: Install dependencies
-        working-directory: videoCapture
-        run: npm install
+        run: |
+          cd videoCapture
+          npm install
 
+      # 6️⃣ 构建前端
       - name: Build frontend
-        working-directory: videoCapture
-        run: npm run build
+        run: |
+          cd videoCapture
+          npm run build
 
+      # 7️⃣ 构建 Tauri app
       - name: Build Tauri app
-        working-directory: videoCapture
-        run: npx tauri build
+        run: |
+          cd videoCapture
+          npx tauri build
 
+      # 8️⃣ 上传安装包到 GitHub Artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
