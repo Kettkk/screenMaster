@@ -1,0 +1,1 @@
+基于react的pc录屏工具，支持macOS和windows
